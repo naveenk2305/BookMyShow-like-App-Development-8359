@@ -4,9 +4,9 @@ import { motion } from 'framer-motion';
 import * as FiIcons from 'react-icons/fi';
 import SafeIcon from '../common/SafeIcon';
 import MovieCard from '../components/MovieCard';
-import { movies, genres, languages } from '../data/mockData';
+import { movies, genres, languages, cities } from '../data/mockData';
 
-const { FiFilter, FiSearch, FiX } = FiIcons;
+const { FiFilter, FiSearch, FiX, FiMapPin } = FiIcons;
 
 const Movies = () => {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -18,6 +18,7 @@ const Movies = () => {
     language: searchParams.get('language') || '',
     status: searchParams.get('status') || '',
     rating: searchParams.get('rating') || '',
+    city: searchParams.get('city') || '',
   });
 
   useEffect(() => {
@@ -65,6 +66,13 @@ const Movies = () => {
       );
     }
 
+    // City filter
+    if (filters.city) {
+      filtered = filtered.filter(movie =>
+        movie.cities && movie.cities.includes(filters.city)
+      );
+    }
+
     setFilteredMovies(filtered);
   };
 
@@ -87,11 +95,22 @@ const Movies = () => {
       language: '',
       status: '',
       rating: '',
+      city: '',
     });
     setSearchParams({});
   };
 
   const activeFiltersCount = Object.values(filters).filter(v => v).length;
+
+  // Group movies by language
+  const moviesByLanguage = filteredMovies.reduce((acc, movie) => {
+    const lang = movie.language;
+    if (!acc[lang]) {
+      acc[lang] = [];
+    }
+    acc[lang].push(movie);
+    return acc;
+  }, {});
 
   return (
     <motion.div
@@ -107,7 +126,7 @@ const Movies = () => {
             Movies
           </h1>
           <p className="text-gray-600">
-            Discover and book tickets for the latest movies
+            Discover and book tickets for movies in multiple languages
           </p>
         </div>
 
@@ -162,7 +181,24 @@ const Movies = () => {
               exit={{ opacity: 0, height: 0 }}
               className="bg-white border border-gray-200 rounded-lg p-6 space-y-4"
             >
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+                {/* Language Filter */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Language
+                  </label>
+                  <select
+                    value={filters.language}
+                    onChange={(e) => handleFilterChange('language', e.target.value)}
+                    className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                  >
+                    <option value="">All Languages</option>
+                    {languages.map(language => (
+                      <option key={language} value={language}>{language}</option>
+                    ))}
+                  </select>
+                </div>
+
                 {/* Genre Filter */}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -180,19 +216,19 @@ const Movies = () => {
                   </select>
                 </div>
 
-                {/* Language Filter */}
+                {/* City Filter */}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Language
+                    City
                   </label>
                   <select
-                    value={filters.language}
-                    onChange={(e) => handleFilterChange('language', e.target.value)}
+                    value={filters.city}
+                    onChange={(e) => handleFilterChange('city', e.target.value)}
                     className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                   >
-                    <option value="">All Languages</option>
-                    {languages.map(language => (
-                      <option key={language} value={language}>{language}</option>
+                    <option value="">All Cities</option>
+                    {cities.map(city => (
+                      <option key={city} value={city}>{city}</option>
                     ))}
                   </select>
                 </div>
@@ -235,17 +271,35 @@ const Movies = () => {
         </div>
 
         {/* Results */}
-        <div className="mb-4">
+        <div className="mb-6">
           <p className="text-gray-600">
             Showing {filteredMovies.length} of {movies.length} movies
           </p>
         </div>
 
-        {/* Movies Grid */}
-        {filteredMovies.length > 0 ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-            {filteredMovies.map((movie, index) => (
-              <MovieCard key={movie.id} movie={movie} index={index} />
+        {/* Movies by Language */}
+        {Object.keys(moviesByLanguage).length > 0 ? (
+          <div className="space-y-12">
+            {Object.entries(moviesByLanguage).map(([language, languageMovies]) => (
+              <motion.div
+                key={language}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="space-y-6"
+              >
+                <div className="flex items-center space-x-3">
+                  <h2 className="text-2xl font-bold text-gray-900">{language} Movies</h2>
+                  <span className="bg-primary-100 text-primary-700 px-3 py-1 rounded-full text-sm font-medium">
+                    {languageMovies.length} movies
+                  </span>
+                </div>
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                  {languageMovies.map((movie, index) => (
+                    <MovieCard key={movie.id} movie={movie} index={index} />
+                  ))}
+                </div>
+              </motion.div>
             ))}
           </div>
         ) : (

@@ -4,11 +4,14 @@ import { motion } from 'framer-motion';
 import * as FiIcons from 'react-icons/fi';
 import SafeIcon from '../common/SafeIcon';
 import { useAuth } from '../contexts/AuthContext';
+import { cities } from '../data/mockData';
 
-const { FiSearch, FiMapPin, FiUser, FiLogOut, FiMenu, FiX } = FiIcons;
+const { FiSearch, FiMapPin, FiUser, FiLogOut, FiMenu, FiX, FiChevronDown } = FiIcons;
 
 const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isCityDropdownOpen, setIsCityDropdownOpen] = useState(false);
+  const [selectedCity, setSelectedCity] = useState('Mumbai');
   const [searchQuery, setSearchQuery] = useState('');
   const { user, logout } = useAuth();
   const navigate = useNavigate();
@@ -25,6 +28,12 @@ const Header = () => {
   const handleLogout = () => {
     logout();
     navigate('/');
+  };
+
+  const handleCityChange = (city) => {
+    setSelectedCity(city);
+    setIsCityDropdownOpen(false);
+    // You can add logic here to filter content based on selected city
   };
 
   const isActive = (path) => location.pathname === path;
@@ -64,10 +73,34 @@ const Header = () => {
 
           {/* Location & User Menu - Desktop */}
           <div className="hidden md:flex items-center space-x-4">
-            {/* Location */}
-            <div className="flex items-center space-x-1 text-gray-600">
-              <SafeIcon icon={FiMapPin} className="w-4 h-4" />
-              <span className="text-sm">Mumbai</span>
+            {/* City Selector */}
+            <div className="relative">
+              <button
+                onClick={() => setIsCityDropdownOpen(!isCityDropdownOpen)}
+                className="flex items-center space-x-1 text-gray-600 hover:text-primary-600 transition-colors"
+              >
+                <SafeIcon icon={FiMapPin} className="w-4 h-4" />
+                <span className="text-sm font-medium">{selectedCity}</span>
+                <SafeIcon icon={FiChevronDown} className="w-3 h-3" />
+              </button>
+
+              {isCityDropdownOpen && (
+                <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-50 max-h-60 overflow-y-auto">
+                  {cities.map((city) => (
+                    <button
+                      key={city}
+                      onClick={() => handleCityChange(city)}
+                      className={`block w-full text-left px-4 py-2 text-sm transition-colors ${
+                        selectedCity === city
+                          ? 'bg-primary-50 text-primary-600'
+                          : 'text-gray-700 hover:bg-gray-50'
+                      }`}
+                    >
+                      {city}
+                    </button>
+                  ))}
+                </div>
+              )}
             </div>
 
             {/* Navigation */}
@@ -150,6 +183,23 @@ const Header = () => {
                 />
               </div>
             </form>
+
+            {/* Mobile City Selector */}
+            <div className="mb-4">
+              <div className="flex items-center space-x-2 mb-2">
+                <SafeIcon icon={FiMapPin} className="w-4 h-4 text-gray-600" />
+                <span className="text-sm font-medium text-gray-700">Current City: {selectedCity}</span>
+              </div>
+              <select
+                value={selectedCity}
+                onChange={(e) => setSelectedCity(e.target.value)}
+                className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+              >
+                {cities.map(city => (
+                  <option key={city} value={city}>{city}</option>
+                ))}
+              </select>
+            </div>
 
             {/* Mobile Navigation */}
             <nav className="space-y-2">
